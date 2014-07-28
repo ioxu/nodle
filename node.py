@@ -1,7 +1,73 @@
 from pyglet.gl import *
 from pyglet.window import mouse
-import utils
-import curves
+import utils, curves
+
+class Edge_Creator(object):
+	"""docstring for Edge_Creator"""
+	def __init__(self, port_from = None, application = None):
+		super(Edge_Creator, self).__init__()
+		self.port_from = port_from
+		self.application = application
+		self.window = application.window
+		self.window.push_handlers(self)
+		self.bezier = curves.Bezier( [ [0,0], [0,0], [0,0], [0,0] ], width = 5 )
+		print self, "init", "DRAG"
+
+		# find candidates to drop onto (implicitly avoids dropping onto port_from)
+		ports = [p for n in self.application.nodes for p in n.ports]
+		if self.port_from.style == "in":
+			self.candidates = [p for p in ports if p.style == "out" ]
+		if self.port_from.style == "out":
+			self.candidates = [p for p in ports if p.style == "in" ]
+
+
+	def on_mouse_drag(self, x, y, dx, dy, buttons, modifiers):
+		if self.port_from.style == "out":
+			self.bezier.update( [ x, y ],
+								[self.port_from.absx,
+								self.port_from.absy] )
+		elif self.port_from.style == "in":
+			self.bezier.update([self.port_from.absx,
+								self.port_from.absy],
+								[ x, y ])
+		
+		# CONSUME
+		#return True
+
+	def on_mouse_release(self, x, y, button, modifiers):	
+		print self, "on_mouse_release", "DROP"
+		for p in self.candidates:
+			if p.in_hit(x,y):
+				edge = self.port_from.connect( p )
+				# if remove != None :
+				# 	print "REMOVE", self.application.edges[remove], remove
+				# 	self.application.edges.remove( remove )
+				self.application.edges.append( edge )
+
+				# if self.port_from.style == "out":
+				# 	self.application.edges.append( Edge( port1 = p, port2 = self.port_from ) )
+
+				# elif self.port_from.style == "in":
+				# 	self.application.edges.append( Edge( port1 = self.port_from, port2 = p ) )
+
+		# destroy self
+		self.remove()
+
+
+	def remove(self):
+		print("destroying", self)
+		self.window.pop_handlers()
+		self.bezier = None
+		del(self)
+		#print(self)
+
+	def draw(self):
+		#print(self, "on_draw", self.bezier.cpoints[3][0])
+		#self.bezier.draw(hull = True)
+		if self.bezier:
+			#self.bezier.draw(hull=True)
+			self.bezier.draw(hull=False)
+		#return True
 
 class Edge(object):
 	"""docstring for Edge"""
@@ -19,8 +85,12 @@ class Edge(object):
 		#self.curve.draw(hull=True)
 		self.curve.draw(hull=False)
 
-
-
+	def remove(self):
+		"""remove an edge from ports"""
+		print self, "REMOVE"
+		self.port1.edge = None
+		self.port2.edge = None
+		del(self)
 
 class Port(object):
 	"""docstring for Port"""
@@ -42,6 +112,7 @@ class Port(object):
 		self.colour = colour
 		self.parent = parent
 		self.style = style
+		self.edge = None
 
 		# interaction
 		self.hit_size = self.size*2
@@ -66,6 +137,24 @@ class Port(object):
 		"""attach port to parent"""
 		self.parent = parent
 
+	def connect(self, port):
+		"connect to a port"
+		print port.edge, "port.edge"
+
+		if port.edge:
+			port.disconnect()
+
+		if self.style == "in" and port.style == "out" :
+			self.edge = Edge( port1 = self, port2 = port )
+			port.edge = self.edge
+		elif self.style == "out" and port.style == "in":
+			self.edge = Edge( port1 = port, port2 = self )
+			port.edge = self.edge
+		return self.edge
+
+	def disconnect(self):
+		self.edge.remove()
+
 	def draw(self):
 		#print self, self.selected
 
@@ -85,7 +174,6 @@ class Port(object):
 		pyglet.graphics.draw(1, pyglet.gl.GL_POINTS,
     		('v2f', (self.x + self.parent.x, self.y + self.parent.y))
 		)
-
 
 	# events
 	def push_handlers(self, window):

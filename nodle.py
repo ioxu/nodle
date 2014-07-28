@@ -7,6 +7,7 @@ from pyglet.window import key
 import node
 import curves
 
+
 class Application(object):
 	"""docstring for App"""
 	def __init__(self, *args, **kwargs):
@@ -54,33 +55,22 @@ class Application(object):
 
 	def on_draw(self):
 		self.window.clear()
-		#glEnable (GL_BLEND)
-		# bez
 		self.fps_display.draw()
 
 		if self.edge_creator:
 			self.edge_creator.draw()
 
-
+		# nodes and edges
 		for e in self.edges:
 			e.draw()
 
-		# self.edges[0].update([self.nodes[1].x, self.nodes[1].y], [self.nodes[0].x, self.nodes[0].y])
-		# self.edges[0].draw(hull=True)
-
-		# self.edges[1].update([self.nodes[1].x, self.nodes[1].y], [self.nodes[3].x, self.nodes[3].y])
-		# self.edges[1].draw(hull=True)
-
-
-		# nodes
 		for n in self.nodes:
 			n.draw()
 
 	def create_edge(self, pfrom):
 		"""interactive edges creator"""
 		print(self, "create_edge", pfrom)
-		#return curves.Edge_Creator(port_from = pfrom, application = self)
-		self.edge_creator = curves.Edge_Creator(port_from = pfrom, application = self)
+		self.edge_creator = node.Edge_Creator(port_from = pfrom, application = self)
 
 ###################
 app = Application()

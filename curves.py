@@ -5,61 +5,6 @@ import pyglet
 from pyglet.gl import *
 import node
 
-class Edge_Creator(object):
-	"""docstring for Edge_Creator"""
-	def __init__(self, port_from = None, application = None):
-		super(Edge_Creator, self).__init__()
-		self.port_from = port_from
-		self.application = application
-		self.window = application.window
-		self.window.push_handlers(self)
-		self.bezier = Bezier( [ [0,0], [0,0], [0,0], [0,0] ], width = 5 )
-
-
-
-	def on_mouse_drag(self, x, y, dx, dy, buttons, modifiers):
-		#print self, "on_mouse_drag"
-		#self.port_from.highlight = True
-
-		self.bezier.update( [ x,
-							y ],
-							[self.port_from.absx,
-							self.port_from.absy] )
-
-		
-		# CONSUME
-		#return True
-
-	def on_mouse_release(self, x, y, button, modifiers):	
-		print(self, "on_mouse_release")
-		
-		for n in self.application.nodes:
-			for p in n.ports:
-				if p.in_hit(x,y):
-					#self.application.edges.append( node.Edge( port1 = self.port_from, port2 = p ) )
-					self.application.edges.append( node.Edge( port2 = self.port_from, port1 = p ) )
-
-
-
-		self.remove()
-		#return True
-
-
-	def remove(self):
-		print("destroying", self)
-		self.window.pop_handlers()
-		self.bezier = None
-		del(self)
-		#print(self)
-
-	def draw(self):
-		#print(self, "on_draw", self.bezier.cpoints[3][0])
-		#self.bezier.draw(hull = True)
-		if self.bezier:
-			#self.bezier.draw(hull=True)
-			self.bezier.draw(hull=False)
-		#return True
-
 class Bezier(object):
 	def __init__(self,
 				cpoints = [ [0,0], [0,0], [0,0], [0,0] ],

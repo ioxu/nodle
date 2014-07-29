@@ -9,12 +9,12 @@ class Bezier(object):
 	def __init__(self,
 				cpoints = [ [0,0], [0,0], [0,0], [0,0] ],
 				width = 3,
-				colour = (0.4, 0.4, 0.9, 0.75),
+				colour = (0.39,0.39,0.39,1), #(0.4, 0.4, 0.9, 0.75),
 				steps = 20):
 		"""bezier class, hold control points, and control point colours"""
 		print("glevaluator.init()")
 		self.colour = colour
-		self.hilightcolour = colour#(1.0, 1.0, 0.0, 0.5)
+		self.hilightcolour = colour
 		self.width = width
 		self.hull_width = 1.5
 		self.steps = steps
@@ -73,8 +73,6 @@ class Bezier(object):
 		## CONVERT TO VERTEX LISTS, remove evaluator, draw to batch in app.
 		##
 
-		#print(self, self.draw)
-
 		if hull:
 			glLineWidth(self.hull_width)
 			glColor4f(0.5, 0.5, 0.5, 0.15)
@@ -98,14 +96,14 @@ class Bezier(object):
 
 		# stipple
 		#glLineStipple(1, 0x00FF)
-		glEnable(GL_LINE_STIPPLE)
+		#glEnable(GL_LINE_STIPPLE)
+		
+		# evaluator
 		glBegin(GL_LINE_STRIP)
 		for i in range(0,self.steps+1):
 			glEvalCoord1f(i/float(self.steps))
 		glEnd()
 		
-
-
-		# end stipple
+		#end stipple
 		#glDisable(GL_LINE_STIPPLE)
 

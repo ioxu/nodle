@@ -1,3 +1,5 @@
+"""directed node graphs"""
+
 from pyglet.gl import *
 from pyglet.window import mouse
 import utils, curves
@@ -11,15 +13,19 @@ class Edge_Creator(object):
 		self.window = application.window
 		self.window.push_handlers(self)
 		self.bezier = curves.Bezier( [ [0,0], [0,0], [0,0], [0,0] ], width = 5 )
+		self.candidates = None
 		print self, "init", "DRAG"
 
 		# find candidates to drop onto (implicitly avoids dropping onto port_from)
+		# get ports
 		ports = [p for n in self.application.nodes for p in n.ports]
+		# remove ports on same parent node
+		ports = [p for p in ports if p not in self.port_from.parent.ports]
+		# sort in/out ports
 		if self.port_from.style == "in":
 			self.candidates = [p for p in ports if p.style == "out" ]
 		if self.port_from.style == "out":
 			self.candidates = [p for p in ports if p.style == "in" ]
-
 
 	def on_mouse_drag(self, x, y, dx, dy, buttons, modifiers):
 		if self.port_from.style == "out":
@@ -30,25 +36,12 @@ class Edge_Creator(object):
 			self.bezier.update([self.port_from.absx,
 								self.port_from.absy],
 								[ x, y ])
-		
-		# CONSUME
-		#return True
 
-	def on_mouse_release(self, x, y, button, modifiers):	
+	def on_mouse_release(self, x, y, button, modifiers):
 		print self, "on_mouse_release", "DROP"
 		for p in self.candidates:
 			if p.in_hit(x,y):
 				edge = self.port_from.connect( p )
-				# if remove != None :
-				# 	print "REMOVE", self.application.edges[remove], remove
-				# 	self.application.edges.remove( remove )
-				self.application.edges.append( edge )
-
-				# if self.port_from.style == "out":
-				# 	self.application.edges.append( Edge( port1 = p, port2 = self.port_from ) )
-
-				# elif self.port_from.style == "in":
-				# 	self.application.edges.append( Edge( port1 = self.port_from, port2 = p ) )
 
 		# destroy self
 		self.remove()
@@ -62,12 +55,8 @@ class Edge_Creator(object):
 		#print(self)
 
 	def draw(self):
-		#print(self, "on_draw", self.bezier.cpoints[3][0])
-		#self.bezier.draw(hull = True)
 		if self.bezier:
-			#self.bezier.draw(hull=True)
 			self.bezier.draw(hull=False)
-		#return True
 
 class Edge(object):
 	"""docstring for Edge"""
@@ -99,7 +88,7 @@ class Port(object):
 			x = 0.0,
 			y= 0.0,
 			size = 10,
-			colour = (0.5,0.5,0.5,0.5),
+			colour = (0.39,0.39,0.39,1), #(0.5,0.5,0.5,0.5),
 			parent = None,
 			style = "in",
 			window = None,
@@ -141,9 +130,11 @@ class Port(object):
 		"connect to a port"
 		print port.edge, "port.edge"
 
-		if port.edge:
+		# remove existing edge on "in" port if one exists
+		if port.edge and port.style == "in":
 			port.disconnect()
 
+		# connect ports
 		if self.style == "in" and port.style == "out" :
 			self.edge = Edge( port1 = self, port2 = port )
 			port.edge = self.edge
@@ -183,9 +174,6 @@ class Port(object):
 							self.on_mouse_release)
 
 	def on_mouse_motion( self, x, y, dx, dy ):
-		#print self, "on_mouse_motion"
-
-
 		if self.in_hit(x, y):
 			self.highlight = True
 		else:
@@ -197,22 +185,15 @@ class Port(object):
 				self.selected = True
 				
 				print(self, "drag init")
-				#self.edge_creator = self.parent.parent.create_edge(self)
 				self.parent.parent.create_edge(self)
 
 	def on_mouse_release(self, x, y, button, modifiers):
-		#if self.selected and not self.in_hit(x, y):
 		if self.selected:
 			self.selected = False
 			self.highlight = False
 			print self, "on_mouse_release"
 
 	def on_mouse_drag(self, x, y, dx, dy, buttons, modifiers):
-		
-		##
-		#print("port on_mouse_drag", self.edge_creator)
-		##
-
 		if self.in_hit(x, y):
 			self.highlight = True
 		else:
@@ -220,7 +201,6 @@ class Port(object):
 
 		if buttons & mouse.LEFT:
 			if self.selected:
-				#print self, "on_mouse_drag"
 				pass
 			else:
 				pass
@@ -312,6 +292,9 @@ class Node(object):
 	    if buttons & mouse.LEFT:
 			if self.in_hit(x, y):
 				self.selected = True
+
+				# consume to avoid other nodes recieving select
+				return True
 
 	def on_mouse_release(self, x, y, button, modifiers):
 	    if self.selected:

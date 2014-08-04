@@ -55,7 +55,8 @@ class Application(object):
 		self.window.set_mouse_visible(False)
 
 		# background colour
-		pyglet.gl.glClearColor(0.3, 0.3, 0.3, 1)
+		#pyglet.gl.glClearColor(0.3, 0.3, 0.3, 1)
+		pyglet.gl.glClearColor(0.2, 0.2, 0.2, 1)
 
 		glEnable (GL_BLEND)
 		glBlendFunc (GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA)
@@ -96,7 +97,7 @@ class Application(object):
 		# nodes and edges
 		# loop nodes, draw edges on input ports
 		ports = [p for n in self.nodes for p in n.ports]
-		ports = [p for p in ports if p.style == "in" ]
+		ports = [p for p in ports if p.style == node.PORTDIRECTION_INPUT or p.style == node.PORTDIRECTION_ADIRECTED]
 		edges = [p.edge for p in ports if p.edge ]
 		for e in edges:
 			e.draw()

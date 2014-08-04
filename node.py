@@ -4,6 +4,12 @@ from pyglet.gl import *
 from pyglet.window import mouse
 import utils, curves
 
+# port constants
+PORTDIRECTION_INPUT = 0
+PORTDIRECTION_OUTPUT = 1
+PORTDIRECTION_ADIRECTED = 2
+
+
 class Edge_Creator(object):
 	"""docstring for Edge_Creator"""
 	def __init__(self, port_from = None, application = None):
@@ -21,21 +27,34 @@ class Edge_Creator(object):
 		ports = [p for n in self.application.nodes for p in n.ports]
 		# remove ports on same parent node
 		ports = [p for p in ports if p not in self.port_from.parent.ports]
-		# sort in/out ports
-		if self.port_from.style == "in":
-			self.candidates = [p for p in ports if p.style == "out" ]
-		if self.port_from.style == "out":
-			self.candidates = [p for p in ports if p.style == "in" ]
+		
+		# find candidate drop ports
+		if self.port_from.style == PORTDIRECTION_INPUT:
+			self.candidates = [p for p in ports if p.style == PORTDIRECTION_OUTPUT ]
+		
+		if self.port_from.style == PORTDIRECTION_OUTPUT:
+			self.candidates = [p for p in ports if p.style == PORTDIRECTION_INPUT ]
+
+		if self.port_from.style == PORTDIRECTION_ADIRECTED:
+			self.candidates = [p for p in ports if p.style == PORTDIRECTION_ADIRECTED ]
 
 	def on_mouse_drag(self, x, y, dx, dy, buttons, modifiers):
-		if self.port_from.style == "out":
+		
+		if self.port_from.style == PORTDIRECTION_OUTPUT:
 			self.bezier.update( [ x, y ],
 								[self.port_from.absx,
 								self.port_from.absy] )
-		elif self.port_from.style == "in":
+		
+		elif self.port_from.style == PORTDIRECTION_INPUT:
 			self.bezier.update([self.port_from.absx,
 								self.port_from.absy],
 								[ x, y ])
+		
+		elif self.port_from.style == PORTDIRECTION_ADIRECTED:
+			self.bezier.update([self.port_from.absx,
+								self.port_from.absy],
+								[ x, y ])
+
 
 	def on_mouse_release(self, x, y, button, modifiers):
 		print self, "on_mouse_release", "DROP"
@@ -90,8 +109,9 @@ class Port(object):
 			size = 10,
 			colour = (0.39,0.39,0.39,1), #(0.5,0.5,0.5,0.5),
 			parent = None,
-			style = "in",
+			style = PORTDIRECTION_INPUT,
 			window = None,
+			tangent_v = (0.0, 1.0, 0.0), # outgoing edge vector
 			**kwargs):
 		super(Port, self).__init__()
 		self.name = name
@@ -128,19 +148,26 @@ class Port(object):
 
 	def connect(self, port):
 		"connect to a port"
-		print port.edge, "port.edge"
 
-		# remove existing edge on "in" port if one exists
-		if port.edge and port.style == "in":
+		# remove existing edge on PORTDIRECTION_INPUT port if one exists
+		if port.edge and port.style == PORTDIRECTION_INPUT:
 			port.disconnect()
 
 		# connect ports
-		if self.style == "in" and port.style == "out" :
+		if self.style == PORTDIRECTION_INPUT and port.style == PORTDIRECTION_OUTPUT :
 			self.edge = Edge( port1 = self, port2 = port )
 			port.edge = self.edge
-		elif self.style == "out" and port.style == "in":
+		
+		elif self.style == PORTDIRECTION_OUTPUT and port.style == PORTDIRECTION_INPUT:
 			self.edge = Edge( port1 = port, port2 = self )
 			port.edge = self.edge
+		
+		elif self.style == PORTDIRECTION_ADIRECTED and port.style == PORTDIRECTION_ADIRECTED:
+			print("ADIRECTED on ADIRECTED")
+			self.edge = Edge( port1 = port, port2 = self )
+			port.edge = self.edge
+
+		print port.edge, "port.edge"
 		return self.edge
 
 	def disconnect(self):
@@ -314,6 +341,8 @@ class Node(object):
 		return d < self.hit_size/2
 
 
+# concrete implementations
+
 class SimpleNode(Node):
 	"""docstring for SimpleNode"""
 	def __init__(self, *args, **kwargs):
@@ -327,7 +356,8 @@ class SimpleNode(Node):
 				Port( name = "p1",
 				x = -p_spacing,
 				y = p_spacing,
-				style = "in",
+				style = PORTDIRECTION_INPUT,
+				tangent_v = (0.0, 1.0, 0.0),
 				window = self.window,
 				parent = kwargs["parent"]
 				)
@@ -337,7 +367,8 @@ class SimpleNode(Node):
 				Port( name = "p2",
 				x = p_spacing,
 				y = p_spacing,
-				style = "in",
+				style = PORTDIRECTION_INPUT,
+				tangent_v = (0.0, 1.0, 0.0),
 				window = self.window,
 				parent = kwargs["parent"]
 				)
@@ -347,11 +378,26 @@ class SimpleNode(Node):
 				Port( name = "p3",
 				x = 0.0,
 				y = -p_spacing * 1.2,
-				style = "out",
+				style = PORTDIRECTION_OUTPUT,
+				tangent_v = (0.0, -1.0, 0.0),
 				window = self.window,
 				parent = kwargs["parent"]
 				)
 				)
+
+		adp_size = 5
+		self.attach_port(
+				Port( name = "p4",
+				x = -p_spacing * 1.2,
+				y = 0.0,
+				size = adp_size,
+				style = PORTDIRECTION_ADIRECTED,
+				tangent_v = (-1.0, 0.0, 0.0),
+				window = self.window,
+				parent = kwargs["parent"]
+				)
+				)
+
 
 		for p in self.ports:
 			p.push_handlers(self.window)

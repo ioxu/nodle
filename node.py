@@ -20,7 +20,7 @@ class Edge_Creator(object):
 		self.window.push_handlers(self)
 		self.bezier = curves.Bezier( [ [0,0], [0,0], [0,0], [0,0] ], width = 5 )
 		self.candidates = None
-		print self, "init", "DRAG"
+		print(self, "init", "DRAG")
 
 		# find candidates to drop onto (implicitly avoids dropping onto port_from)
 		# get ports
@@ -57,7 +57,7 @@ class Edge_Creator(object):
 
 
 	def on_mouse_release(self, x, y, button, modifiers):
-		print self, "on_mouse_release", "DROP"
+		print(self, "on_mouse_release", "DROP")
 		for p in self.candidates:
 			if p.in_hit(x,y):
 				edge = self.port_from.connect( p )
@@ -95,7 +95,7 @@ class Edge(object):
 
 	def remove(self):
 		"""remove an edge from ports"""
-		print self, "REMOVE"
+		print(self, "REMOVE")
 		self.port1.edge = None
 		self.port2.edge = None
 		del(self)
@@ -167,7 +167,7 @@ class Port(object):
 			self.edge = Edge( port1 = port, port2 = self )
 			port.edge = self.edge
 
-		print port.edge, "port.edge"
+		print(port.edge, "port.edge")
 		return self.edge
 
 	def disconnect(self):
@@ -190,7 +190,7 @@ class Port(object):
 
 
 		pyglet.graphics.draw(1, pyglet.gl.GL_POINTS,
-    		('v2f', (self.x + self.parent.x, self.y + self.parent.y))
+			('v2f', (self.x + self.parent.x, self.y + self.parent.y))
 		)
 
 	# events
@@ -207,7 +207,7 @@ class Port(object):
 			self.highlight = False
 
 	def on_mouse_press(self, x, y, buttons, modifiers):
-	    if buttons & mouse.LEFT:
+		if buttons & mouse.LEFT:
 			if self.in_hit(x, y):
 				self.selected = True
 				
@@ -218,7 +218,7 @@ class Port(object):
 		if self.selected:
 			self.selected = False
 			self.highlight = False
-			print self, "on_mouse_release"
+			print(self, "on_mouse_release")
 
 	def on_mouse_drag(self, x, y, dx, dy, buttons, modifiers):
 		if self.in_hit(x, y):
@@ -275,10 +275,10 @@ class Node(object):
 
 		# label
 		self.label = pyglet.text.Label(self.name,
-                          font_name=None,#'Times New Roman',
-                          font_size=7,
-                          x=0.0, y=0.0,
-                          anchor_x='left', anchor_y='center')
+						font_name=None,#'Times New Roman',
+						font_size=7,
+						x=0.0, y=0.0,
+						anchor_x='left', anchor_y='center')
 
 
 	def attach_port(self, port):
@@ -300,7 +300,7 @@ class Node(object):
 
 		# draw
 		pyglet.graphics.draw(1, pyglet.gl.GL_POINTS,
-    		('v2i', (self.x, self.y))
+			('v2i', (self.x, self.y))
 		)
 		self.label.x = self.x +10
 		self.label.y = self.y
@@ -316,7 +316,7 @@ class Node(object):
 			self.highlight = False
 
 	def on_mouse_press(self, x, y, buttons, modifiers):
-	    if buttons & mouse.LEFT:
+		if buttons & mouse.LEFT:
 			if self.in_hit(x, y):
 				self.selected = True
 
@@ -324,12 +324,12 @@ class Node(object):
 				return True
 
 	def on_mouse_release(self, x, y, button, modifiers):
-	    if self.selected:
-	    	self.selected = False
+		if self.selected:
+			self.selected = False
 
 
 	def on_mouse_drag(self, x, y, dx, dy, buttons, modifiers):
-	    if buttons & mouse.LEFT:
+		if buttons & mouse.LEFT:
 			if self.selected:
 				self.x += dx
 				self.y += dy

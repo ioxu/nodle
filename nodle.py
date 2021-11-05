@@ -36,7 +36,8 @@ class Application(object):
 		self.initialise()
 
 		self.edge_creator = None
-		self.fps_display = pyglet.clock.ClockDisplay()
+		#self.fps_display = pyglet.clock.ClockDisplay()
+		self.fps_display = pyglet.window.FPSDisplay(self.window)
 
 		self.mouse = Mouse()
 
@@ -103,14 +104,14 @@ class Application(object):
 			e.draw()
 
 		for n in self.nodes:
-		 	n.draw()
+			n.draw()
 
-		 # mouse
+		# mouse
 		glColor4f(*self.mouse.colour)
 		glPointSize(self.mouse.size)
 
 		pyglet.graphics.draw(1, pyglet.gl.GL_POINTS,
-		    				('v2f', (self.mouse.x, self.mouse.y))
+							('v2f', (self.mouse.x, self.mouse.y))
 							)
 
 	def create_edge(self, pfrom):
